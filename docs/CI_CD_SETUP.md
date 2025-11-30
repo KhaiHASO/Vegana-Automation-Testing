@@ -1,4 +1,4 @@
-# 🚀 GitHub Actions CI/CD Setup
+# 🚀 GitHub Actions CI/CD Demo
 
 ## 📋 Quick Start
 
@@ -20,32 +20,26 @@ git push origin main
 
 ---
 
-## 📁 Workflow Files
+## 📁 Workflow File
 
-### 1. `ci-cd.yml` - Full Pipeline
+### `ci-cd-demo.yml` - Automation Test Pipeline
 
 **Tính năng:**
-- ✅ Setup MySQL database
-- ✅ Build project
-- ✅ Start Spring Boot app
-- ✅ Run automation tests
-- ✅ Upload test reports
+- ✅ Setup MySQL database (vegana_store)
+- ✅ Import database schema từ vegana.sql
+- ✅ Start Spring Boot application
+- ✅ Run TestNG automation tests (Login Tests & Register Tests)
+- ✅ Upload test reports (Extent Reports, Screenshots, Logs)
+- ✅ Upload application logs
+
+**Test Suite:**
+- Login Tests (`LoginTest.java`)
+- Register Tests (`RegisterTest.java`)
 
 **Trigger:**
 - Push vào `main` hoặc `develop`
 - Pull Request
 - Manual trigger (workflow_dispatch)
-
-### 2. `simple-ci.yml` - Simple Pipeline
-
-**Tính năng:**
-- ✅ Basic test execution
-- ✅ Upload reports
-- ✅ Scheduled runs (2h sáng UTC)
-
-**Sử dụng khi:**
-- Cần pipeline đơn giản, nhanh
-- Không cần nhiều browsers
 
 ---
 
@@ -58,17 +52,37 @@ git push origin main
 - **Username**: `root`
 - **Password**: `123456`
 
-### Environment Variables
+### Test Configuration
 
-```yaml
-BASE_URL: http://localhost:8080
-BROWSER: chrome
-DB_HOST: localhost
-DB_PORT: 3306
-DB_NAME: vegana_store
-DB_USERNAME: root
-DB_PASSWORD: 123456
-```
+File: `src/test/resources/test.properties`
+- **Base URL**: `http://localhost:8080`
+- **Browser**: `chrome`
+- **Test Suite**: `src/test/resources/testng.xml`
+
+---
+
+## 📊 View Results
+
+### Test Reports
+
+1. Vào **Actions** tab
+2. Chọn workflow run
+3. Scroll xuống **Artifacts**
+4. Download `test-reports` để xem:
+   - **Extent Reports**: HTML reports tại `test-output/reports/`
+   - **Screenshots**: Screenshots khi test fail tại `test-output/screenshots/`
+   - **Logs**: Test logs tại `test-output/logs/`
+
+### Application Logs
+
+Download `app-logs` artifact để xem Spring Boot application logs.
+
+### Manual Trigger
+
+1. Vào **Actions** tab
+2. Chọn workflow **GitHub Actions CI/CD Demo**
+3. Click **Run workflow**
+4. Chọn branch và click **Run workflow**
 
 ---
 
@@ -77,7 +91,7 @@ DB_PASSWORD: 123456
 ### Workflow không chạy
 
 **Kiểm tra:**
-- File workflow có trong `.github/workflows/`?
+- File workflow có trong `.github/workflows/ci-cd-demo.yml`?
 - Syntax YAML đúng chưa?
 - Branch trigger đúng chưa?
 
@@ -93,43 +107,32 @@ DB_PASSWORD: 123456
 **Kiểm tra:**
 - MySQL đã sẵn sàng chưa (wait step)
 - Port 8080 có conflict không
-- Xem logs trong workflow run
+- Xem app-logs artifact
 
 ### Tests fail
 
 **Kiểm tra:**
-- Download artifacts để xem reports
+- Download test-reports artifact
+- Xem Extent Reports HTML
 - Kiểm tra screenshots
 - Xem test logs
 
----
+### No files found in test-output
 
-## 📊 View Results
-
-### Test Reports
-
-1. Vào **Actions** tab
-2. Chọn workflow run
-3. Scroll xuống **Artifacts**
-4. Download `test-reports` để xem:
-   - HTML reports
-   - Screenshots
-   - Logs
-
-### Manual Trigger
-
-1. Vào **Actions** tab
-2. Chọn workflow (ví dụ: CI/CD Pipeline)
-3. Click **Run workflow**
-4. Chọn branch và click **Run workflow**
+**Giải pháp:**
+- Tests có thể fail trước khi tạo reports
+- Kiểm tra Maven surefire reports trong logs
+- Xem application logs để debug
 
 ---
 
 ## ✅ Checklist
 
-- [ ] Workflow files đã có trong `.github/workflows/`
+- [ ] Workflow file đã có trong `.github/workflows/ci-cd-demo.yml`
 - [ ] Push code lên GitHub
 - [ ] Workflow tự động chạy
+- [ ] MySQL database setup thành công
+- [ ] Application start thành công
 - [ ] Tests chạy thành công
 - [ ] Reports được upload
 

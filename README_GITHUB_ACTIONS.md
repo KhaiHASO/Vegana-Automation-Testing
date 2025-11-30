@@ -1,4 +1,4 @@
-# 🚀 GitHub Actions CI/CD
+# 🚀 GitHub Actions CI/CD Demo
 
 ## Quick Start
 
@@ -15,20 +15,17 @@
 
 ---
 
-## Workflows
+## Workflow
 
-### `ci-cd.yml` - Full Pipeline
-- Setup MySQL
-- Build & Test
+### `ci-cd-demo.yml` - Automation Test Pipeline
+
+**Chạy:**
+- Setup MySQL database
+- Start Spring Boot app
+- Run TestNG tests (Login & Register)
 - Upload reports
 
 **Trigger:** Push/PR vào `main` hoặc `develop`
-
-### `simple-ci.yml` - Quick Test
-- Basic test execution
-- Scheduled runs (2h sáng UTC)
-
-**Trigger:** Push/PR vào `main`, hoặc schedule
 
 ---
 
@@ -37,7 +34,7 @@
 1. **Actions** tab → Chọn workflow run
 2. Scroll xuống **Artifacts**
 3. Download `test-reports` để xem:
-   - HTML reports
+   - Extent Reports HTML
    - Screenshots
    - Logs
 
@@ -46,10 +43,9 @@
 ## Manual Trigger
 
 1. **Actions** tab
-2. Chọn workflow
+2. Chọn **GitHub Actions CI/CD Demo**
 3. **Run workflow** → Chọn branch → **Run workflow**
 
 ---
 
 Xem chi tiết: [docs/CI_CD_SETUP.md](docs/CI_CD_SETUP.md)
-
