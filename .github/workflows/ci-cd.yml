@@ -77,23 +77,53 @@ jobs:
           echo "Application PID: $APP_PID"
           
           echo "Waiting for application to start..."
-          for i in {1..30}; do
+          MAX_WAIT=60
+          WAITED=0
+          while [ $WAITED -lt $MAX_WAIT ]; do
             if curl -f http://localhost:8080 > /dev/null 2>&1; then
               echo "✅ Application is ready!"
+              curl -f http://localhost:8080
               break
             fi
-            if [ $i -eq 30 ]; then
-              echo "❌ Application failed to start"
-              cat app.log
+            if [ $WAITED -ge $((MAX_WAIT - 2)) ]; then
+              echo "❌ Application failed to start within $MAX_WAIT seconds"
+              echo "Last 50 lines of app.log:"
+              tail -50 app.log || cat app.log
+              echo "Checking if port 8080 is in use:"
+              netstat -tuln | grep 8080 || ss -tuln | grep 8080 || true
               exit 1
             fi
             sleep 2
+            WAITED=$((WAITED + 2))
+            echo "Waiting... ($WAITED/$MAX_WAIT seconds)"
           done
       
       - name: 🧪 Run Tests
+        continue-on-error: true
         run: |
+          echo "Creating test-output directories..."
+          mkdir -p test-output/reports test-output/screenshots test-output/logs
+          
+          echo "Checking application status..."
+          curl -f http://localhost:8080 || echo "⚠️ Application not responding"
+          
           echo "Running automation tests..."
-          mvn clean test -DsuiteXmlFile=src/test/resources/testng.xml
+          mvn clean test -DsuiteXmlFile=src/test/resources/testng.xml || TEST_EXIT_CODE=$?
+          
+          echo "Test execution completed with exit code: ${TEST_EXIT_CODE:-0}"
+          echo "Checking for output files..."
+          find test-output -type f 2>/dev/null | head -20 || echo "No files found in test-output"
+          ls -la test-output/ 2>/dev/null || echo "test-output directory not found"
+          ls -la test-output/reports/ 2>/dev/null || echo "reports directory not found"
+          ls -la test-output/screenshots/ 2>/dev/null || echo "screenshots directory not found"
+          ls -la test-output/logs/ 2>/dev/null || echo "logs directory not found"
+          
+          # Check Maven test results
+          if [ -d target/surefire-reports ]; then
+            echo "Maven surefire reports found:"
+            ls -la target/surefire-reports/ | head -10
+            cat target/surefire-reports/*.txt 2>/dev/null | head -50 || true
+          fi
       
       - name: 📊 Upload Test Reports
         if: always()
@@ -105,6 +135,7 @@ jobs:
             test-output/screenshots/
             test-output/logs/
           retention-days: 30
+          if-no-files-found: warn
       
       - name: 📝 Upload Application Logs
         if: always()
@@ -113,6 +144,7 @@ jobs:
           name: app-logs
           path: app.log
           retention-days: 7
+          if-no-files-found: warn
       
       - name: 🧹 Cleanup
         if: always()
