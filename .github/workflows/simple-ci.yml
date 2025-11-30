@@ -1,4 +1,4 @@
-name: Simple CI - Run Tests
+name: Simple CI
 
 on:
   push:
@@ -6,11 +6,11 @@ on:
   pull_request:
     branches: [ main ]
   schedule:
-    # Chạy tests tự động mỗi ngày lúc 2h sáng (UTC)
     - cron: '0 2 * * *'
 
 jobs:
   test:
+    name: Quick Test
     runs-on: ubuntu-latest
     
     services:
@@ -25,60 +25,56 @@ jobs:
           --health-cmd="mysqladmin ping -h localhost -uroot -p123456"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=3
+          --health-retries=5
     
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout
         uses: actions/checkout@v3
       
-      - name: Set up JDK 17
+      - name: ☕ Setup JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: maven
       
-      - name: Install Chrome
+      - name: 🔧 Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
+          sudo apt-get install -y google-chrome-stable default-mysql-client
       
-      - name: Install MySQL Client
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y default-mysql-client
-      
-      - name: Wait for MySQL
+      - name: ⏳ Wait for MySQL
         run: |
           timeout 60 bash -c 'until mysqladmin ping -h 127.0.0.1 -uroot -p123456 --silent; do sleep 2; done'
-          echo "MySQL is ready!"
+        env:
+          MYSQL_PWD: 123456
       
-      - name: Setup MySQL Database
+      - name: 📥 Setup Database
         run: |
           mysql -h 127.0.0.1 -uroot -p123456 -e "CREATE DATABASE IF NOT EXISTS vegana_store;"
           if [ -f vegana.sql ]; then
             mysql -h 127.0.0.1 -uroot -p123456 vegana_store < vegana.sql
-            echo "Database schema imported successfully"
-          else
-            echo "Warning: vegana.sql not found, skipping import"
           fi
         env:
           MYSQL_PWD: 123456
       
-      - name: Start Application
+      - name: 🚀 Start App
         run: |
-          mvn spring-boot:run &
-          sleep 30
-          curl -f http://localhost:8080 || exit 1
+          mvn spring-boot:run > app.log 2>&1 &
+          sleep 35
+          curl -f http://localhost:8080 || (cat app.log && exit 1)
       
-      - name: Run Tests
+      - name: 🧪 Run Tests
         run: mvn clean test
       
-      - name: Upload Reports
+      - name: 📊 Upload Reports
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: test-reports
           path: test-output/
           retention-days: 7
-
+      
+      - name: 🧹 Cleanup
+        if: always()
+        run: pkill -f spring-boot:run || true

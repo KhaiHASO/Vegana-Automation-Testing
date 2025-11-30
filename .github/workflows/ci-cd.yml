@@ -1,14 +1,13 @@
-name: CI/CD Pipeline - Vegana Shop Automation Tests
+name: CI/CD Pipeline
 
 on:
   push:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
-  workflow_dispatch: # Cho phép chạy thủ công
+  workflow_dispatch:
 
 jobs:
-  # Job 1: Build và Test
   test:
     name: Run Automation Tests
     runs-on: ubuntu-latest
@@ -25,147 +24,98 @@ jobs:
           --health-cmd="mysqladmin ping -h localhost -uroot -p123456"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=3
-    
-    strategy:
-      matrix:
-        java-version: [17]
-        browser: [chrome] # Có thể thêm firefox, edge
+          --health-retries=5
     
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v3
       
-      - name: Set up JDK ${{ matrix.java-version }}
+      - name: ☕ Set up JDK 17
         uses: actions/setup-java@v3
         with:
-          java-version: ${{ matrix.java-version }}
+          java-version: '17'
           distribution: 'temurin'
           cache: maven
       
-      - name: Cache Maven dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
-      
-      - name: Install Chrome
+      - name: 🌐 Install Chrome
         run: |
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable
           google-chrome --version
       
-      - name: Install MySQL Client
+      - name: 🗄️ Install MySQL Client
         run: |
-          sudo apt-get update
           sudo apt-get install -y default-mysql-client
       
-      - name: Wait for MySQL
+      - name: ⏳ Wait for MySQL
         run: |
+          echo "Waiting for MySQL to be ready..."
           timeout 60 bash -c 'until mysqladmin ping -h 127.0.0.1 -uroot -p123456 --silent; do sleep 2; done'
-          echo "MySQL is ready!"
+          echo "✅ MySQL is ready!"
+        env:
+          MYSQL_PWD: 123456
       
-      - name: Setup MySQL Database
+      - name: 📥 Setup Database
         run: |
+          echo "Setting up database..."
           mysql -h 127.0.0.1 -uroot -p123456 -e "CREATE DATABASE IF NOT EXISTS vegana_store;"
           if [ -f vegana.sql ]; then
+            echo "Importing schema from vegana.sql..."
             mysql -h 127.0.0.1 -uroot -p123456 vegana_store < vegana.sql
-            echo "Database schema imported successfully"
+            echo "✅ Schema imported"
           else
-            echo "Warning: vegana.sql not found, skipping import"
+            echo "⚠️ vegana.sql not found, skipping import"
           fi
         env:
           MYSQL_PWD: 123456
       
-      - name: Start Spring Boot Application
+      - name: 🚀 Start Application
         run: |
-          mvn spring-boot:run &
-          sleep 30 # Đợi app khởi động
-          curl -f http://localhost:8080 || exit 1
-        continue-on-error: false
+          echo "Starting Spring Boot application..."
+          mvn spring-boot:run > app.log 2>&1 &
+          APP_PID=$!
+          echo "Application PID: $APP_PID"
+          
+          echo "Waiting for application to start..."
+          for i in {1..30}; do
+            if curl -f http://localhost:8080 > /dev/null 2>&1; then
+              echo "✅ Application is ready!"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "❌ Application failed to start"
+              cat app.log
+              exit 1
+            fi
+            sleep 2
+          done
       
-      - name: Run Tests
+      - name: 🧪 Run Tests
         run: |
+          echo "Running automation tests..."
           mvn clean test -DsuiteXmlFile=src/test/resources/testng.xml
-        env:
-          BROWSER: ${{ matrix.browser }}
       
-      - name: Archive test results
+      - name: 📊 Upload Test Reports
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: test-results-${{ matrix.browser }}
+          name: test-reports
           path: |
             test-output/reports/
             test-output/screenshots/
             test-output/logs/
           retention-days: 30
       
-      - name: Upload Extent Reports
+      - name: 📝 Upload Application Logs
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: extent-reports-${{ matrix.browser }}
-          path: test-output/reports/*.html
-          retention-days: 30
+          name: app-logs
+          path: app.log
+          retention-days: 7
       
-      - name: Publish Test Results
+      - name: 🧹 Cleanup
         if: always()
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        with:
-          files: '**/testng-results.xml'
-          check_name: 'Test Results (${{ matrix.browser }})'
-          comment_mode: 'create new'
-          report_individual_runs: true
-
-  # Job 2: Generate và Publish Reports
-  reports:
-    name: Generate Test Reports
-    runs-on: ubuntu-latest
-    needs: test
-    if: always()
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: Download all artifacts
-        uses: actions/download-artifact@v3
-      
-      - name: List test results
         run: |
-          echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
-          echo "### Extent Reports" >> $GITHUB_STEP_SUMMARY
-          find . -name "*.html" -type f | head -5 >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Screenshots" >> $GITHUB_STEP_SUMMARY
-          find . -name "*.png" -type f | wc -l >> $GITHUB_STEP_SUMMARY
-      
-      - name: Archive Reports
-        uses: actions/upload-artifact@v3
-        with:
-          name: all-test-reports
-          path: |
-            test-results-*/
-            extent-reports-*/
-          retention-days: 90
-
-  # Job 3: Notification (Optional)
-  notify:
-    name: Send Notification
-    runs-on: ubuntu-latest
-    needs: [test, reports]
-    if: always()
-    
-    steps:
-      - name: Notify on Success
-        if: success()
-        run: |
-          echo "✅ All tests passed successfully!"
-      
-      - name: Notify on Failure
-        if: failure()
-        run: |
-          echo "❌ Tests failed. Please check the reports."
-
+          pkill -f spring-boot:run || true
+          echo "Cleanup completed"
