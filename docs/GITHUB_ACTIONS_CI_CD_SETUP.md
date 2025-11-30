@@ -22,7 +22,7 @@ git push origin main
 
 ## 📁 Workflow File
 
-### `ci-cd-demo.yml` - Automation Test Pipeline
+### `github-actions-ci-cd-demo.yml` - Automation Test Pipeline
 
 **Tính năng:**
 - ✅ Setup MySQL database (vegana_store)
@@ -91,7 +91,7 @@ Download `app-logs` artifact để xem Spring Boot application logs.
 ### Workflow không chạy
 
 **Kiểm tra:**
-- File workflow có trong `.github/workflows/ci-cd-demo.yml`?
+- File workflow có trong `.github/workflows/github-actions-ci-cd-demo.yml`?
 - Syntax YAML đúng chưa?
 - Branch trigger đúng chưa?
 
@@ -128,7 +128,7 @@ Download `app-logs` artifact để xem Spring Boot application logs.
 
 ## ✅ Checklist
 
-- [ ] Workflow file đã có trong `.github/workflows/ci-cd-demo.yml`
+- [ ] Workflow file đã có trong `.github/workflows/github-actions-ci-cd-demo.yml`
 - [ ] Push code lên GitHub
 - [ ] Workflow tự động chạy
 - [ ] MySQL database setup thành công

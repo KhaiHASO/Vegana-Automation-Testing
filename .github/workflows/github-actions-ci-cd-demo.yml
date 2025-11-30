@@ -1,0 +1,108 @@
+name: GitHub Actions CI/CD Demo
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  automation-tests:
+    name: Run Automation Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: 123456
+          MYSQL_DATABASE: vegana_store
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -p123456"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      
+      - name: Install Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+      
+      - name: Install MySQL Client
+        run: sudo apt-get install -y default-mysql-client
+      
+      - name: Wait for MySQL
+        run: |
+          timeout 60 bash -c 'until mysqladmin ping -h 127.0.0.1 -uroot -p123456 --silent; do sleep 2; done'
+        env:
+          MYSQL_PWD: 123456
+      
+      - name: Setup Database
+        run: |
+          mysql -h 127.0.0.1 -uroot -p123456 -e "CREATE DATABASE IF NOT EXISTS vegana_store;"
+          if [ -f vegana.sql ]; then
+            mysql -h 127.0.0.1 -uroot -p123456 vegana_store < vegana.sql
+          fi
+        env:
+          MYSQL_PWD: 123456
+      
+      - name: Start Application
+        run: |
+          mvn spring-boot:run > app.log 2>&1 &
+          sleep 40
+          curl -f http://localhost:8080 || exit 1
+      
+      - name: Run Tests
+        continue-on-error: true
+        run: |
+          mkdir -p test-output/reports test-output/screenshots test-output/logs
+          mvn clean test -DsuiteXmlFile=src/test/resources/testng.xml
+      
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            test-output/reports/
+            test-output/screenshots/
+            test-output/logs/
+          retention-days: 30
+          if-no-files-found: warn
+      
+      - name: Upload Maven Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maven-results
+          path: target/surefire-reports/
+          retention-days: 30
+          if-no-files-found: warn
+      
+      - name: Upload App Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-logs
+          path: app.log
+          retention-days: 7
+          if-no-files-found: warn
+      
+      - name: Cleanup
+        if: always()
+        run: pkill -f spring-boot:run || true
+

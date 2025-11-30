@@ -22,8 +22,7 @@ buildNumber.properties
 bin/
 
 # Test Output
-test-output/
-*.log
+
 
 # OS
 .DS_Store

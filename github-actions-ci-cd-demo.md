@@ -1,4 +1,4 @@
-# 🚀 GitHub Actions CI/CD Demo
+# GitHub Actions CI/CD Demo
 
 ## Quick Start
 
@@ -17,7 +17,7 @@
 
 ## Workflow
 
-### `ci-cd-demo.yml` - Automation Test Pipeline
+**File:** `.github/workflows/github-actions-ci-cd-demo.yml`
 
 **Chạy:**
 - Setup MySQL database
@@ -33,10 +33,10 @@
 
 1. **Actions** tab → Chọn workflow run
 2. Scroll xuống **Artifacts**
-3. Download `test-reports` để xem:
-   - Extent Reports HTML
-   - Screenshots
-   - Logs
+3. Download:
+   - `test-reports` - Extent Reports, Screenshots, Logs
+   - `maven-results` - Maven test results
+   - `app-logs` - Application logs
 
 ---
 
