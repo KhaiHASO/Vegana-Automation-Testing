@@ -53,7 +53,8 @@ jobs:
       
       - name: Setup Database
         run: |
-          mysql -h 127.0.0.1 -uroot -p123456 -e "CREATE DATABASE IF NOT EXISTS vegana_store;"
+          mysql -h 127.0.0.1 -uroot -p123456 -e "DROP DATABASE IF EXISTS vegana_store;"
+          mysql -h 127.0.0.1 -uroot -p123456 -e "CREATE DATABASE vegana_store;"
           if [ -f vegana.sql ]; then
             mysql -h 127.0.0.1 -uroot -p123456 vegana_store < vegana.sql
           fi
