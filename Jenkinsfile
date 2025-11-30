@@ -23,9 +23,9 @@ pipeline {
         stage('Start App') {
             steps {
                 bat '''
-                    echo Starting Spring Boot...
-                    start /B mvn spring-boot:run > app.log 2>&1
-                    timeout /T 10
+                echo Starting Spring Boot...
+                start "" /B mvn spring-boot:run > app.log 2>&1
+                ping -n 10 127.0.0.1 >nul
                 '''
             }
         }
