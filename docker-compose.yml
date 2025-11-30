@@ -13,28 +13,13 @@ services:
     volumes:
       - ./jenkins/jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./:/workspace
-      - ./jenkins/init-scripts:/usr/local/bin/init-scripts:ro
     environment:
       JAVA_OPTS: "-Djenkins.install.runSetupWizard=false -Xmx2048m"
     networks:
-      - vegana-network
+      - vegana-net
     restart: unless-stopped
-    # Install tools on first run
-    entrypoint: >
-      bash -c "
-        if [ ! -f /var/jenkins_home/.tools_installed ]; then
-          echo '🔧 Installing tools (first run only)...'
-          apt-get update -qq &&
-          apt-get install -y -qq maven default-mysql-client netcat-openbsd curl &&
-          touch /var/jenkins_home/.tools_installed &&
-          echo '✅ Tools installed!'
-        fi
-        # Start Jenkins
-        exec /usr/local/bin/jenkins.sh
-      "
 
-  # MySQL Database
+  # MySQL 8 Database
   mysql:
     image: mysql:8.0
     container_name: mysql8
@@ -42,15 +27,13 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: 123456
       MYSQL_DATABASE: vegana_store
-      MYSQL_USER: vegana_user
-      MYSQL_PASSWORD: vegana_pass
     ports:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./vegana.sql:/docker-entrypoint-initdb.d/vegana.sql:ro
     networks:
-      - vegana-network
+      - vegana-net
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p123456"]
       interval: 5s
@@ -66,7 +49,7 @@ services:
       - "4442:4442"
       - "4443:4443"
     networks:
-      - vegana-network
+      - vegana-net
     environment:
       - GRID_MAX_SESSION=16
       - GRID_BROWSER_TIMEOUT=300
@@ -88,25 +71,7 @@ services:
     volumes:
       - /dev/shm:/dev/shm
     networks:
-      - vegana-network
-    restart: unless-stopped
-
-  # Selenium Firefox Node (Optional)
-  selenium-firefox:
-    image: selenium/node-firefox:4.15.0
-    container_name: selenium-firefox
-    shm_size: 2gb
-    depends_on:
-      - selenium-hub
-    environment:
-      - HUB_HOST=selenium-hub
-      - HUB_PORT=4444
-      - NODE_MAX_INSTANCES=2
-      - NODE_MAX_SESSION=2
-    volumes:
-      - /dev/shm:/dev/shm
-    networks:
-      - vegana-network
+      - vegana-net
     restart: unless-stopped
 
 volumes:
@@ -114,6 +79,5 @@ volumes:
     driver: local
 
 networks:
-  vegana-network:
+  vegana-net:
     driver: bridge
-
