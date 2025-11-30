@@ -6,7 +6,6 @@ import com.java.automation.config.TestConfig;
 import com.java.automation.utils.ExtentReportManager;
 import com.java.automation.utils.LoggerUtil;
 import com.java.automation.utils.ScreenshotUtil;
-import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -18,7 +17,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 /**
  * Base test class that sets up and tears down WebDriver
@@ -54,37 +53,37 @@ public class BaseTest {
         
         switch (browser) {
             case "chrome":
-                WebDriverManager.chromedriver().setup();
                 ChromeOptions chromeOptions = new ChromeOptions();
                 chromeOptions.addArguments("--start-maximized");
                 chromeOptions.addArguments("--disable-notifications");
+                // Selenium 4 tự động quản lý driver thông qua Selenium Manager
                 driver = new ChromeDriver(chromeOptions);
                 break;
                 
             case "firefox":
-                WebDriverManager.firefoxdriver().setup();
                 FirefoxOptions firefoxOptions = new FirefoxOptions();
                 firefoxOptions.addArguments("--start-maximized");
+                // Selenium 4 tự động quản lý driver thông qua Selenium Manager
                 driver = new FirefoxDriver(firefoxOptions);
                 break;
                 
             case "edge":
-                WebDriverManager.chromedriver().setup();
                 ChromeOptions options = new ChromeOptions();
                 options.addArguments("--start-maximized");
                 options.addArguments("--disable-notifications");
+                // Selenium 4 tự động quản lý driver thông qua Selenium Manager
                 driver = new ChromeDriver(options);
                 break;
                 
             default:
-                WebDriverManager.chromedriver().setup();
                 ChromeOptions defaultOptions = new ChromeOptions();
                 defaultOptions.addArguments("--start-maximized");
+                // Selenium 4 tự động quản lý driver thông qua Selenium Manager
                 driver = new ChromeDriver(defaultOptions);
         }
 
-        driver.manage().timeouts().implicitlyWait(TestConfig.getImplicitWait(), TimeUnit.SECONDS);
-        driver.manage().timeouts().pageLoadTimeout(TestConfig.getPageLoadTimeout(), TimeUnit.SECONDS);
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(TestConfig.getImplicitWait()));
+        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(TestConfig.getPageLoadTimeout()));
         driver.get(TestConfig.getBaseUrl());
         
         logger.info("Navigated to: " + TestConfig.getBaseUrl());

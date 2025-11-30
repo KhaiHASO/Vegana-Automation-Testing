@@ -34,7 +34,8 @@ public class PersistenceJPAConfig {
 	public DataSource dataSource() {
 		DriverManagerDataSource dataSource = new DriverManagerDataSource();
 		dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
-		dataSource.setUrl("jdbc:mysql://localhost:3306/vegana_store");
+		// Set collation to utf8mb4_general_ci to match existing database schema
+		dataSource.setUrl("jdbc:mysql://localhost:3306/vegana_store?useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_general_ci");
 		dataSource.setUsername("root");
 		dataSource.setPassword("123456");
 		return dataSource;

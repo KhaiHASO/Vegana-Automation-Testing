@@ -8,6 +8,8 @@ import org.openqa.selenium.support.PageFactory;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.time.Duration;
+
 /**
  * Page Object Model for Login/Register page
  */
@@ -66,8 +68,8 @@ public class LoginOrRegisterPage {
 
     public LoginOrRegisterPage(WebDriver driver) {
         this.driver = driver;
-        // Selenium 3.x sử dụng long (seconds) thay vì Duration
-        this.wait = new WebDriverWait(driver, 10);
+        // Selenium 4.x sử dụng Duration thay vì long (seconds)
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         PageFactory.initElements(driver, this);
     }
 

@@ -285,14 +285,14 @@ BEGIN
    
    SELECT quantity, price INTO existing_quantity, existing_price
    FROM carts
-   WHERE customerid = p_customerid AND productid = p_productid;
+   WHERE customerId COLLATE utf8mb4_general_ci = p_customerid COLLATE utf8mb4_general_ci AND productId = p_productid;
 
    IF existing_quantity IS NOT NULL THEN
       UPDATE carts
       SET quantity = existing_quantity + 1
-      WHERE customerid = p_customerid AND productid = p_productid;
+      WHERE customerId COLLATE utf8mb4_general_ci = p_customerid COLLATE utf8mb4_general_ci AND productId = p_productid;
    ELSE
-      INSERT INTO carts(customerid, productid, quantity, price)
+      INSERT INTO carts(customerId, productId, quantity, price)
       SELECT p_customerid, p_productid, 1, (p.price - (p.price * p.discount / 100)) * 1 -- Tính giá trị price từ số lượng, giá và khuyến mãi sản phẩm
       FROM products p
       WHERE p.productId = p_productid;
@@ -301,7 +301,7 @@ BEGIN
    IF existing_quantity IS NOT NULL THEN
       UPDATE carts
       SET price = (price / existing_quantity) * (existing_quantity + 1)
-      WHERE customerid = p_customerid AND productid = p_productid;
+      WHERE customerId COLLATE utf8mb4_general_ci = p_customerid COLLATE utf8mb4_general_ci AND productId = p_productid;
    END IF;
 END
 ;;
