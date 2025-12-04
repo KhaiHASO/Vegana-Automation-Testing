@@ -1,0 +1,14 @@
+name: Trigger Jenkins Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+
+jobs:
+  trigger_jenkins:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Jenkins via ngrok
+        run: |
+          curl -X POST "https://36c7bfcb2fe2.ngrok-free.app/job/Vegana-CI-CD/build?token=vegana-trigger"
