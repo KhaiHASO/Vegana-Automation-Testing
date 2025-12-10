@@ -62,7 +62,7 @@ public class PersistenceJPAConfig {
 			ddlAuto = System.getenv("HIBERNATE_HBM2DDL_AUTO");
 		}
 		if (ddlAuto == null || ddlAuto.isEmpty()) {
-			ddlAuto = "update"; // default
+			ddlAuto = "none"; // default
 		}
 		properties.setProperty("hibernate.hbm2ddl.auto", ddlAuto);
 		properties.setProperty("hibernate.show_sql", "true");

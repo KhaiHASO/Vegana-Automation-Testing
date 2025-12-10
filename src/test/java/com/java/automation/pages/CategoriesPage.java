@@ -28,6 +28,20 @@ public class CategoriesPage {
     @FindBy(xpath = "//button[contains(@class, 'btn-primary') and contains(text(), 'Add Category')]")
     private WebElement addCategoryButton;
 
+    // Add modal + fields
+    @FindBy(id = "addRowModal")
+    private WebElement addCategoryModal;
+
+    @FindBy(id = "name")
+    private WebElement categoryNameInput;
+
+    @FindBy(xpath = "//div[@id='addRowModal']//button[@type='submit' and contains(text(), 'Add')]")
+    private WebElement submitNewCategoryButton;
+
+    // Delete confirmation
+    @FindBy(id = "yesOption")
+    private WebElement confirmDeleteButton;
+
     // Table elements
     @FindBy(xpath = "//table[@id='add-row']")
     private WebElement categoriesTable;
@@ -94,6 +108,49 @@ public class CategoriesPage {
     public void clickAddCategoryButton() {
         wait.until(ExpectedConditions.elementToBeClickable(addCategoryButton));
         addCategoryButton.click();
+    }
+
+    public void createCategory(String name) {
+        clickAddCategoryButton();
+        wait.until(ExpectedConditions.visibilityOf(addCategoryModal));
+        wait.until(ExpectedConditions.visibilityOf(categoryNameInput)).clear();
+        categoryNameInput.sendKeys(name);
+        submitNewCategoryButton.click();
+        wait.until(ExpectedConditions.invisibilityOf(addCategoryModal));
+    }
+
+    public WebElement findCategoryRow(String name) {
+        try {
+            return driver.findElement(org.openqa.selenium.By.xpath("//table[@id='add-row']//tr[td[normalize-space()='" + name + "']]"));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public String getCategoryIdForName(String name) {
+        WebElement row = findCategoryRow(name);
+        if (row == null) return null;
+        try {
+            return row.findElement(org.openqa.selenium.By.xpath("./td[2]")).getText();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public void clickEditForCategory(String name) {
+        WebElement row = findCategoryRow(name);
+        if (row == null) throw new RuntimeException("Category row not found for: " + name);
+        WebElement editLink = row.findElement(org.openqa.selenium.By.xpath(".//a[contains(@href, '/editCategory/')]"));
+        wait.until(ExpectedConditions.elementToBeClickable(editLink)).click();
+    }
+
+    public void deleteCategoryByName(String name) {
+        WebElement row = findCategoryRow(name);
+        if (row == null) throw new RuntimeException("Category row not found for: " + name);
+        WebElement deleteBtn = row.findElement(org.openqa.selenium.By.xpath(".//button[contains(@onclick, 'showConfigModalDialog')]"));
+        deleteBtn.click();
+        wait.until(ExpectedConditions.elementToBeClickable(confirmDeleteButton)).click();
+        wait.until(ExpectedConditions.stalenessOf(row));
     }
 
     public int getCategoryCount() {

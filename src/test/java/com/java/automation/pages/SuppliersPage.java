@@ -28,6 +28,24 @@ public class SuppliersPage {
     @FindBy(xpath = "//button[contains(@class, 'btn-primary') and contains(text(), 'Add Supplier')]")
     private WebElement addSupplierButton;
 
+    @FindBy(id = "addRowModal")
+    private WebElement addSupplierModal;
+
+    @FindBy(id = "name")
+    private WebElement supplierNameInput;
+
+    @FindBy(id = "email")
+    private WebElement supplierEmailInput;
+
+    @FindBy(id = "phone")
+    private WebElement supplierPhoneInput;
+
+    @FindBy(xpath = "//div[@id='addRowModal']//button[@type='submit' and contains(text(), 'Add')]")
+    private WebElement submitNewSupplierButton;
+
+    @FindBy(id = "yesOption")
+    private WebElement confirmDeleteButton;
+
     // Table elements
     @FindBy(xpath = "//table[@id='add-row']")
     private WebElement suppliersTable;
@@ -94,6 +112,53 @@ public class SuppliersPage {
     public void clickAddSupplierButton() {
         wait.until(ExpectedConditions.elementToBeClickable(addSupplierButton));
         addSupplierButton.click();
+    }
+
+    public void createSupplier(String name, String email, String phone) {
+        clickAddSupplierButton();
+        wait.until(ExpectedConditions.visibilityOf(addSupplierModal));
+        supplierNameInput.clear();
+        supplierNameInput.sendKeys(name);
+        supplierEmailInput.clear();
+        supplierEmailInput.sendKeys(email);
+        supplierPhoneInput.clear();
+        supplierPhoneInput.sendKeys(phone);
+        submitNewSupplierButton.click();
+        wait.until(ExpectedConditions.invisibilityOf(addSupplierModal));
+    }
+
+    public WebElement findSupplierRow(String name) {
+        try {
+            return driver.findElement(org.openqa.selenium.By.xpath("//table[@id='add-row']//tr[td[normalize-space()='" + name + "']]"));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public String getSupplierId(String name) {
+        WebElement row = findSupplierRow(name);
+        if (row == null) return null;
+        try {
+            return row.findElement(org.openqa.selenium.By.xpath("./td[1]")).getText();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public void clickEditSupplier(String name) {
+        WebElement row = findSupplierRow(name);
+        if (row == null) throw new RuntimeException("Supplier row not found for: " + name);
+        WebElement editLink = row.findElement(org.openqa.selenium.By.xpath(".//a[contains(@href, '/editSupplier/')]"));
+        wait.until(ExpectedConditions.elementToBeClickable(editLink)).click();
+    }
+
+    public void deleteSupplier(String name) {
+        WebElement row = findSupplierRow(name);
+        if (row == null) throw new RuntimeException("Supplier row not found for: " + name);
+        WebElement deleteButton = row.findElement(org.openqa.selenium.By.xpath(".//button[contains(@onclick, 'showConfigModalDialog')]"));
+        deleteButton.click();
+        wait.until(ExpectedConditions.elementToBeClickable(confirmDeleteButton)).click();
+        wait.until(ExpectedConditions.stalenessOf(row));
     }
 
     public int getSupplierCount() {
